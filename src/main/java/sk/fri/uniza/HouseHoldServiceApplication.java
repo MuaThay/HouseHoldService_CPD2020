@@ -22,6 +22,25 @@ import sk.fri.uniza.resources.IoTNodeResource;
 public class HouseHoldServiceApplication
         extends Application<HouseHoldServiceConfiguration> {
 
+    // Vytvorenie Hibernate baliká: tento balík kombinuje objekt určený na
+    // nastavenie Hibernat a samotnú knižnicu Hibernate
+    private final HibernateBundle<HouseHoldServiceConfiguration> hibernate =
+            // Všetky triedy(v žargóne Hibernate sú označované ako Entity),
+            // ktoré tvoria model musia byť prídané do Bundle
+            new HibernateBundle<HouseHoldServiceConfiguration>(
+                    HouseHold.class,
+                    IotNode.class,
+                    Field.class,
+                    DataDouble.class,
+                    DataString.class,
+                    DataInteger.class,
+                    ContactPerson.class) {
+                @Override
+                public DataSourceFactory getDataSourceFactory(
+                        HouseHoldServiceConfiguration configuration) {
+                    return configuration.getDataSourceFactory();
+                }
+            };
 
     public static void main(final String[] args) throws Exception {
         new HouseHoldServiceApplication().run(args);
@@ -46,6 +65,9 @@ public class HouseHoldServiceApplication
             }
         });
 
+        // Pripojený balík Hibernate (ORM databáza)
+        bootstrap.addBundle(hibernate);
+
     }
 
     // V rámci životného cyklu, je táto metóda zavolaná až po metóde initialize.
@@ -54,6 +76,30 @@ public class HouseHoldServiceApplication
     @Override
     public void run(final HouseHoldServiceConfiguration configuration,
                     final Environment environment) {
+        // Vytvorené objekty na prístup k databáze
+        final HouseHoldDAO houseHoldDAO =
+                new HouseHoldDAO(hibernate.getSessionFactory());
+
+        // Vytvorené objekty reprezentujúce REST rozhranie
+        environment.jersey()
+                .register(new HouseHoldResource(houseHoldDAO, null));
+
+        // Vytvorenie Healthcheck (overenie zdravia aplikácie), ktorý
+        // využijeme na otestovanie databázy
+        final DatabaseHealthCheck databaseHealthCheck =
+                new UnitOfWorkAwareProxyFactory(hibernate)
+                        .create(DatabaseHealthCheck.class,
+                                new Class[]{HouseHoldDAO.class,
+                                        IotNodeDAO.class, FieldDAO.class,
+                                        DataDAO.class},
+                                new Object[]{houseHoldDAO, null,
+                                        null, null
+                                });
+        // Zaregistrovanie Healthcheck
+        environment.healthChecks()
+                .register("databaseHealthcheck", databaseHealthCheck);
+        // Spustenie všetkých health kontrol
+        environment.healthChecks().runHealthChecks();
 
     }
 
