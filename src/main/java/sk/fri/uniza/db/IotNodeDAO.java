@@ -21,22 +21,23 @@ public class IotNodeDAO extends AbstractDAO<IotNodeDAO> {
         return iotNode;
     }
 
-    public IotNode findById(Long id) {
-        //TODO Doplniť
-        return null;
+    public IotNodeDAO findById(Long id) {
+        return get(id);
     }
 
     public IotNode update(IotNode iotNode) {
-        //TODO Doplniť
-        return null;
+        return  (IotNode) currentSession().merge(iotNode);
+
     }
 
     public List<IotNode> findByHouseHold(Long houseHoldId) {
-        //TODO Doplniť
-        return null;
+        return list(namedQuery("IotNode_findByhouseHoldId")
+                .setParameter("name", houseHoldId));
+
     }
 
     public List<IotNode> allIotNodes() {
-        return null;
+        return list(namedQuery("Node_All"));
+
     }
 }
