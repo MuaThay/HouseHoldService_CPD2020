@@ -7,7 +7,10 @@ import org.hibernate.validator.constraints.NotEmpty;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.Set;
-
+@org.hibernate.annotations.NamedQueries({
+        @org.hibernate.annotations.NamedQuery(name = "Field_All",
+                query = "from Field"),
+})
 @Entity
 public class Field {
     @Id
@@ -21,7 +24,7 @@ public class Field {
     private String descripton;
 
     @OneToMany(fetch = FetchType.LAZY,
-            mappedBy = "field")
+            mappedBy = "field", cascade = CascadeType.REMOVE)
     @JsonIgnore // Ignorovanie danej premenej z pohladu Serializacie do
     // objektu JSON.Generoval by sa obrovský JSON a dochádzalo by aj k
     // zacykleniu
@@ -49,12 +52,17 @@ public class Field {
 
     @Override
     public boolean equals(Object o) {
-        return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Field field = (Field) o;
+
+        return name != null ? name.equals(field.name) : field.name == null;
     }
 
     @Override
     public int hashCode() {
-        return 0;
+        return name != null ? name.hashCode() : 0;
     }
 
     public String getDescripton() {

@@ -31,10 +31,12 @@ public class FieldDAO extends AbstractDAO<Field> {
 
 
     public Field delete(String id) {
-        return null;
+        Field field = get(id);
+        currentSession().remove(field);
+        return field;
     }
 
     public List<Field> allFields() {
-        return null;
+        return list(namedQuery("Field_All"));
     }
 }
